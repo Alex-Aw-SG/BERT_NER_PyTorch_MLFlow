@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import os
 
 import joblib
 import torch
@@ -17,7 +16,8 @@ import engine
 from model import EntityModel
 import mlflow.pytorch
 from mlflow import pyfunc
-from mlflow.tracking import MlflowClient
+
+torch.cuda.empty_cache()
 
 def process_data(data_path):
     df = pd.read_csv(data_path, encoding="latin-1")
@@ -76,21 +76,11 @@ if __name__ == "__main__":
     model = EntityModel(num_tag=num_tag, num_pos=num_pos)
     model.to(device)
 
-    os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://172.24.120.234:30081"
-    os.environ["AWS_ACCESS_KEY_ID"] = "aiplatform"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "aiplatform"
-
-    mlflow.set_tracking_uri("http://172.24.120.234:30083/")
-    mlflow.set_experiment("AlexBERT_NER")
-    client = MlflowClient()
+    mlflow.set_tracking_uri("file:///Users/alex/Documents/SyncFile/Programming/Projects/Pytorch/BERT_NER_Abhishek/src/mlruns")
     tracking_uri = mlflow.get_tracking_uri()
 
     with mlflow.start_run() as run:
         mlflow.pytorch.log_model(model, "model")
-
-        # run_id = run.info.run_uuid
-        experiment_id = run.info.experiment_id
-        client.set_experiment_tag(experiment_id, "user", "alexaw.sgp@gmail.com")
 
         param_optimizer = list(model.named_parameters())
         no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
